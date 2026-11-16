@@ -72,6 +72,9 @@ server remained running. PyTorch `2.14.0+rocm7.14`, HIP `7.14.60850`, Triton
   INT8 Triton GEMM, paged attention, and unified attention. Decode cases include
   8,704-token contexts, uneven query/context lengths, shuffled caches, and
   sliding windows. Unsupported backends and large test allocations are excluded.
+- Large-row-count RMSNorm forward/backward: **9 passed** across FP32, FP16,
+  and BF16, including 32,768 rows and irregular widths. A separate gfx908 config
+  covers the per-head norm path used during long-prompt prefill.
 - Build-target/JIT guard tests plus CK INT8 tests: **70 passed**, plus **51
   subtests**. CK coverage includes FP16/BF16 outputs, bias, and scale-layout
   rejection. The CK extension built successfully against the current CK pin.

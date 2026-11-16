@@ -3,7 +3,8 @@
 This branch targets personal vLLM use on MI100. It starts from ROCm/aiter
 `7c2fa4dae5084d0ab8dcc17064afc8f27604c492` (2026-11-16). It uses that
 commit's Composable Kernel revision, `f93c029e09f67c983696eecac8e0e0350f3dbb54`.
-The original checkouts and running vLLM server were left unchanged.
+The original source checkouts were left unchanged. The running vLLM service
+now uses this port after the full-model serving validation below.
 
 ## Run it
 
@@ -32,10 +33,11 @@ other backends.
 
 A separate launcher for the user's existing Qwen setup is at
 `/home/john/git-projects/vllm-mi100_support/serve-qwen-aiter.sh`. It preserves the
-current model and serving options and selects this checkout. Use it instead of
-the old launcher at the next restart. It uses the same port and GPU allocation;
-it is not intended to run beside the existing four-GPU server. The current
-server has not been restarted or reconfigured.
+current model and serving options and selects this checkout. It uses the same port and GPU allocation; do not run a second copy beside the
+four-GPU service. `/home/john/start_vllm.sh` now delegates to this launcher, so
+`vllm-server.service` keeps the tested profile across restarts. The original
+startup script is backed up at
+`/home/john/git-projects/vllm-mi100_support/start_vllm.before-aiter-20261116.sh`.
 
 ## What changed
 
@@ -63,8 +65,9 @@ server has not been restarted or reconfigured.
 
 ## Validation on 2026-11-16
 
-Environment: four AMD Instinct MI100 GPUs; tests used GPU 0 while the existing
-server remained running. PyTorch `2.14.0+rocm7.14`, HIP `7.14.60850`, Triton
+Environment: four AMD Instinct MI100 GPUs. Initial operator tests used GPU 0
+while the old server remained running; the subsequent full-model validation
+used all four GPUs after the user authorized a restart. PyTorch `2.14.0+rocm7.14`, HIP `7.14.60850`, Triton
 `3.8.0`, vLLM `0.33.0rc1.dev1351+g53c9679c4.fp16.rocm714`.
 
 - Bounded Triton suite: **358 passed, 32 skipped**. Covers RMSNorm, fused add
@@ -91,12 +94,24 @@ The tiny Llama model is generated locally. It downloads no model or tokenizer.
 Its token agreement checks integration; it is not a language-quality evaluation
 or a benchmark of the user's full Qwen model.
 
-Logs are under `/home/john/git-projects/vllm-mi100_support/aiter-port-*.log`.
+Operator logs are under `/home/john/git-projects/vllm-mi100_support/aiter-port-*.log`.
+Full-model results, outputs, timing, and launcher state are in
+`/home/john/git-projects/vllm-mi100_support/aiter-serving-*.json` and `.log`.
 
 ## Limits and next work
 
-The full Qwen model has not been restarted with this port. Four-GPU serving,
-MTP, sustained-load correctness, and throughput still need a real-model run.
+The full Qwen model was restarted with this port on all four GPUs, with MTP
+and decode graphs enabled. A 252-request run passed: seven baseline tasks,
+220 arithmetic checks, 22 long-prompt retrieval checks, and three 192-token
+streaming benchmarks. The seven baseline answers matched the AITER-disabled
+run, including JSON, Python code, tool calls, and red-image recognition. The
+service stayed healthy with no restarts. Long retrieval prompts were about
+9,261 tokens; the 262,144-token configured limit was not stress-tested.
+
+Decode benchmark rates were 74.71, 74.35, and 63.27 tokens/s without AITER,
+and 72.85, 72.84, and 65.15 tokens/s with AITER. These few samples show no
+clear speedup. Free-form outputs were coherent but were not byte-identical,
+so this is a practical serving comparison, not a fixed-token microbenchmark.
 No end-to-end speedup is claimed. The historical tuning files were not retuned.
 Only the listed config families and cases have test evidence; presence of a
 migrated JSON file does not establish support for every associated operator.

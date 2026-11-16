@@ -48,7 +48,7 @@ def shuffle_kv_cache(
     """
     dtype = key_cache.dtype
     assert value_cache.dtype == dtype
-    assert dtype in (torch.bfloat16, e4m3_dtype)
+    assert dtype in (torch.float16, torch.bfloat16, e4m3_dtype)
 
     num_blocks, block_size, num_kv_heads, head_size = key_cache.shape
     num_blocks_v, block_size_v, num_kv_heads_v, head_size_v = value_cache.shape
@@ -404,6 +404,7 @@ def ref_paged_attn(
     "q_dtype, kv_dtype, o_dtype, block_size, use_out_scale",
     [
         (torch.bfloat16, torch.bfloat16, torch.bfloat16, 64, False),
+        (torch.float16, torch.float16, torch.float16, 64, False),
         (torch.bfloat16, e4m3_dtype, torch.bfloat16, 128, False),
         (e4m3_dtype, e4m3_dtype, torch.bfloat16, 128, False),
         (e4m3_dtype, e4m3_dtype, e4m3_dtype, 128, True),
@@ -412,7 +413,7 @@ def ref_paged_attn(
     ],
 )
 @pytest.mark.parametrize("soft_cap", [None])
-@pytest.mark.parametrize("num_blocks", [32768])
+@pytest.mark.parametrize("num_blocks", [8192, 32768])
 @pytest.mark.parametrize("shuffled_kv_cache", [True, False])
 @pytest.mark.parametrize("force_fp8_pv", [False, True])
 @torch.inference_mode()
@@ -434,12 +435,19 @@ def test_triton_unified_attn_3d(
     torch.cuda.empty_cache()
 
     if DEVICE_ARCH not in (
+        "gfx908",
         "gfx950",
         "gfx1250",
     ):
         # gfx1250 -> Gluon
         # gfx950 -> Gluon
         pytest.skip(f"skip {DEVICE_ARCH}")
+
+    if DEVICE_ARCH == "gfx908" and (
+        q_dtype not in (torch.float16, torch.bfloat16)
+        or kv_dtype not in (torch.float16, torch.bfloat16)
+    ):
+        pytest.skip("gfx908 has no native FP8 or FP4 attention path")
 
     if force_fp8_pv and kv_dtype != torch.uint8:
         pytest.skip("force_fp8_pv_on_fp4_kv_cache only applies to an NVFP4 KV cache")

@@ -1,0 +1,51 @@
+{
+    "schema": {
+        "attn_2d": [
+            "D"
+        ],
+        "attn_3d": [
+            "D"
+        ],
+        "reduce": [
+            "D"
+        ],
+        "kv_split": [
+            "D"
+        ]
+    },
+    "attn_2d": {
+        "any": {
+            "BLOCK_M": 16,
+            "num_warps": 4,
+            "num_stages": 1,
+            "waves_per_eu": 2,
+            "TILE_SIZE_MIN": 16,
+            "TILE_SIZE_MAX": 64
+        }
+    },
+    "attn_3d": {
+        "any": {
+            "BLOCK_M": 16,
+            "num_warps": 4,
+            "num_stages": 1,
+            "waves_per_eu": 2
+        }
+    },
+    "reduce": {
+        "any": {
+            "num_warps": 1,
+            "num_stages": 1,
+            "waves_per_eu": 2
+        }
+    },
+    "kv_split": {
+        "any": {
+            "MIN_SEGMENTS": 1,
+            "SEGMENTS_PER_CU": 2,
+            "MAX_SEGMENTS": 32,
+            "SEGMENT_TILE_MAX": 64,
+            "TILE_SIZE_MIN": 16,
+            "TILE_SIZE_MAX": 64
+        }
+    }
+}

@@ -92,6 +92,16 @@ def test_validate_strict_build_target():
             os.environ["GPU_ARCHS"] = old
 
 
+def test_validate_gfx908_build_target(monkeypatch):
+    from aiter.jit.utils.chip_info import gfx_from_cu_num
+    from aiter.jit.utils.lds_capacity import get_lds_capacity_bytes
+
+    monkeypatch.setenv("GPU_ARCHS", "gfx908")
+    assert core.validate_and_update_archs() == ["gfx908"]
+    assert gfx_from_cu_num(120) == "gfx908"
+    assert get_lds_capacity_bytes("gfx908:sramecc+:xnack-") == 65536
+
+
 def test_needs_arch_rebuild():
     with tempfile.TemporaryDirectory() as tmpdir:
         orig = _patch_jit_dir(tmpdir)

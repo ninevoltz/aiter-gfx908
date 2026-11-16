@@ -111,3 +111,8 @@ csrc/opus_gemm/gen_co/**/asm/
 
 # Merge-conflict backups, which git writes next to the file being merged.
 *.orig
+
+# Local MI100 build and validation caches.
+/.jit/
+/.triton-cache/
+/.vllm-cache/

@@ -2,6 +2,7 @@
 # Copyright (C) 2024-2026, Advanced Micro Devices, Inc. All rights reserved.
 
 _LDS_CAPACITY_BYTES = {
+    "gfx908": 64 * 1024,
     "gfx90a": 64 * 1024,
     "gfx942": 64 * 1024,
     "gfx950": 160 * 1024,

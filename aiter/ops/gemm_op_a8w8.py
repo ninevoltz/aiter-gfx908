@@ -810,6 +810,23 @@ def gemm_a8w8_CK(
     n = WQ.shape[0]
     k = XQ.shape[-1]
 
+    if get_gfx() == "gfx908":
+        if XQ.dtype != torch.int8 or WQ.dtype != torch.int8:
+            raise ValueError("gfx908 CK A8W8 requires INT8 activations and weights")
+        if x_scale.dtype != w_scale.dtype or x_scale.dtype not in (
+            torch.float32,
+            dtype,
+        ):
+            raise ValueError(
+                "gfx908 CK A8W8 scales must have the same dtype, either FP32 "
+                "or the output dtype"
+            )
+        if x_scale.numel() != m or w_scale.numel() != n:
+            raise ValueError(
+                "gfx908 CK A8W8 requires one activation scale per row and "
+                "one weight scale per output channel; block scales are not supported"
+            )
+
     q_dtype_w = WQ.dtype if WQ.dtype in [dtypes.fp8, dtypes.i8] else dtypes.i8
     ck_config = get_GEMM_config_with_quant_type(
         m, n, k, q_dtype_w, AITER_CONFIGS.AITER_CONFIG_GEMM_A8W8_FILE

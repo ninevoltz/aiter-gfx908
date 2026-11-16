@@ -676,7 +676,12 @@ def test_blockscale_kernel_name_forwarding():
         a8w8_mod._CKGEMM_CONFIG_CACHE = {}
         a8w8_mod._CKGEMM_HAS_GFX = {}
         get_CKGEMM_config.cache_clear()
-        with _override_blockscale_csv(csv_empty):
+        # This test records CK dispatch. Do not enter a GPU fallback with the
+        # CPU placeholder tensors when the host is not a CK blockscale target.
+        with (
+            _override_blockscale_csv(csv_empty),
+            patch.object(a8w8_mod, "_hip_blockscale_supported", return_value=True),
+        ):
             record.clear()
             a8w8_mod.gemm_a8w8_blockscale(
                 XQ, WQ, x_scale, w_scale, dtype=torch.bfloat16

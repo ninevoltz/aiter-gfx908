@@ -38,6 +38,7 @@ GFX_MAP = {
 # unlisted counts are not compiled. Extend this table when adding support for new
 # GPU targets or counts.
 GFX_CU_NUMS_MAP = {
+    "gfx908": (120,),  # MI100
     "gfx942": (304, 228, 80),  # MI300X/MI325X, MI300A, MI308X
     "gfx950": (256, 128),  # MI350X/MI355X, MI350P
     "gfx1100": (96,),  # Radeon RX 7900 XTX
@@ -56,6 +57,7 @@ GFX_CU_NUMS_MAP = {
 def target_num_xcds(gfx: str, cu_num: int) -> int:
     # XCD counts for SKUs that differ from the eight-XCD default.
     non_standard_xcds = {
+        ("gfx908", 120): 1,
         ("gfx950", 128): 4,  # MI350P
         ("gfx942", 80): 4,  # MI308X
         ("gfx942", 228): 6,  # MI300A

@@ -17,11 +17,17 @@ from aiter.jit.utils.build_targets import (
     base_gfx_arch,
     get_build_targets_env,
     is_gfx1250_family,
+    target_num_xcds,
     torch_processor_count_to_cu,
 )
 
 
 class TestBuildTargetArchitecture(unittest.TestCase):
+    def test_gfx908_offline_build_target(self):
+        with mock.patch.dict(os.environ, {"GPU_ARCHS": "gfx908"}, clear=True):
+            self.assertEqual(get_build_targets_env(), [("gfx908", 120)])
+        self.assertEqual(target_num_xcds("gfx908", 120), 1)
+
     def test_gfx1250_strict_offline_build_target(self):
         with mock.patch.dict(os.environ, {"GPU_ARCHS": "gfx1250-strict"}, clear=True):
             self.assertEqual(get_build_targets_env(), [("gfx1250-strict", 256)])

@@ -245,6 +245,7 @@ def get_asic_revision() -> int:
 # are always written with their real arch by the tuner, so they never rely on
 # this backfill.
 _LEGACY_CU_NUM_TO_GFX = {
+    120: "gfx908",
     256: "gfx950",
     80: "gfx942",
     228: "gfx942",
@@ -652,7 +653,9 @@ def _get_device_name(device_id: int) -> str:
     gfx = torch.cuda.get_device_properties(device_id).gcnArchName
     gfx = gfx.split(":", 1)[0].lower()
 
-    if gfx == "gfx942":
+    if gfx == "gfx908":
+        return "MI100"
+    elif gfx == "gfx942":
         chip_id = _get_pci_chip_id(device_id)
         if chip_id in MI308_CHIP_IDS:
             return "MI308"

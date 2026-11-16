@@ -253,7 +253,8 @@ def test_fused_add_rmsnorm(M, N, in_dtype_str):
 
 
 @pytest.mark.parametrize("in_dtype_str", ["fp16", "bf16"])
-def test_fused_add_rmsnorm_gemma_norm(in_dtype_str):
+@pytest.mark.parametrize("impl", ["hip", "triton"])
+def test_fused_add_rmsnorm_gemma_norm(in_dtype_str, impl):
     in_dtype = str_to_torch_dtype[in_dtype_str]
     torch.manual_seed(0)
 
@@ -264,7 +265,8 @@ def test_fused_add_rmsnorm_gemma_norm(in_dtype_str):
     residual_out = torch.empty_like(x)
     output = torch.empty_like(x)
 
-    aiter.rmsnorm2d_fwd_with_add(
+    fn = aiter.rmsnorm2d_fwd_with_add if impl == "hip" else rmsnorm2d_fwd_with_add
+    fn(
         output, x, res, residual_out, weight, 1e-5, gemma_norm=True
     )
 

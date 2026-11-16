@@ -354,6 +354,7 @@ def rmsnorm2d_fwd_with_add(
     residual_out: torch.Tensor,
     weight: torch.Tensor,
     epsilon: float,
+    gemma_norm: bool = False,
 ):
     """
     Performs an addition between two inputs and then applies Root Mean Square Layer Normalization over
@@ -366,6 +367,7 @@ def rmsnorm2d_fwd_with_add(
     - Residual_out: The tensor in which the addition result will be stored with shape (M, N).
     - Weight: The learnable weights tensor with shape (N, ).
     - Epsilon: A value added to the denominator for numerical stability.
+    - Gemma_norm: Use 1 + Weight when True.
 
     Returns:
     - Output: The output tensor with shape (M, N).
@@ -376,6 +378,8 @@ def rmsnorm2d_fwd_with_add(
         tuple(weight.shape),
         tuple(residual_in.shape),
     )
+    if gemma_norm:
+        weight = weight.float() + 1.0
     return _RMSNorm2dFwdWithAdd.apply(
         out, input, residual_in, residual_out, weight, epsilon, torch.is_grad_enabled()
     )
